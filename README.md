@@ -26,15 +26,11 @@
   ```
   ```
   # Desired data folder structure
-  JointAnglePrediction_JOB | Data                    | 1_Extracted          | walking/running_meta.h5
-                                                     | 2_Processed
-                                                     | 2_Processed_Meta
-                                                     | 3_Hyperopt_Results
-                                                     | 4_Best_Results
-                                                     | 5_Optimization
-                           | 0_preprocessing
-                           | 1_nn_hyperopt_training
-                           ...
+  JointAnglePrediction_JOB | Data  | 1_Extracted        | walking/running_meta.h5
+                                   | 2_Processed
+                                   | 3_Hyperopt_Results
+                                   | 4_Best_Results
+                                   | 5_Optimization
   ```
   
   ## 3. Install requirement libraries
