@@ -13,12 +13,12 @@
     nn_models\ - Scripts for creating and training neural network models
     
  # Installation:
- ## Download source code via git clone
+ ## 1. Download source code via git clone
  ```bash
-  git clone
+  git clone https://github.com/CMU-MBL/JointAnglePrediction_JOB.git
   ```
 
-  ## Set up data folder structure
+  ## 2. Set up data folder structure
   ```bash
   cd JointAnglePrediction_JOB && mkdir Data
   mv <your extracted data folder> ./Data/
@@ -31,13 +31,13 @@
                            ...
   ```
   
-  ## Install requirement libraries
+  ## 3. Install requirement libraries
   ```bash
   pip install -r requirements.txt
   ```
   
   # How to run:
-  ## Data preprocessing
+  ## 1. Data preprocessing
   ```bash
   # Purpose of the file
   python 0_preprocessing/00_hfile_check.py
@@ -54,7 +54,7 @@
   python 0_preprocessing/02_check_dataset.py
   ```
   
-  ## Get best neural network model
+  ## 2. Get best neural network model
   ```bash
   # Run hyper-parameters optimization script
   python 1_nn_hyperopt_training/11_optimize_hyperparams.py
@@ -70,7 +70,7 @@
   python 1_nn_hyperopt_training/13_get_best_results.py
   ```
   
-  ## Run optimization
+  ## 3. Run optimization
   ```bash
   # Predict orientation value from neural network
   python 2_optimization/21_predict_orientation.py
