@@ -15,6 +15,7 @@
  # Installation:
  ## 1. Download source code via git clone
  ```bash
+ # Clone the repository
   git clone https://github.com/CMU-MBL/JointAnglePrediction_JOB.git
   ```
 
@@ -23,11 +24,16 @@
   cd JointAnglePrediction_JOB && mkdir Data
   mv <your extracted data folder> ./Data/
   ```
-  Thus, the we hope the folder structure as:
   ```
-  JointAnglePrediction_JOB -- Data                    -- 1_Extracted      -- walking/running_meta.h5
-                           -- 0_preprocessing
-                           -- 1_nn_hyperopt_training
+  # Desired data folder structure
+  JointAnglePrediction_JOB | Data                    | 1_Extracted          | walking/running_meta.h5
+                                                     | 2_Processed
+                                                     | 2_Processed_Meta
+                                                     | 3_Hyperopt_Results
+                                                     | 4_Best_Results
+                                                     | 5_Optimization
+                           | 0_preprocessing
+                           | 1_nn_hyperopt_training
                            ...
   ```
   
