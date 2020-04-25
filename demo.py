@@ -152,6 +152,19 @@ if __name__ == "__main__":
 
     result_fldr = args.result_fldr
 
+    joint = "knee"
+    activity = "walking"
+    seg1_accel_path = "Data/sample/seg1_accel.npy"
+    seg2_accel_path = "Data/sample/seg2_accel.npy"
+    seg1_gyro_path = "Data/sample/seg1_gyro.npy"
+    seg2_gyro_path = "Data/sample/seg2_gyro.npy"
+    gt_angle_path = "Data/sample/gt_angle.npy"
+
+    angle_model_fldr = "Data/sample/angle_model"
+    ori_model_fldr = "Data/sample/ori_model"
+
+    result_fldr = "Data/sample/result"
+
     # Load custom data
     seg1_accel = load_custom_data(seg1_accel_path)
     seg2_accel = load_custom_data(seg2_accel_path)
