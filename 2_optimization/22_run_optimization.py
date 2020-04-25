@@ -34,13 +34,13 @@ def optimize_entire_frames(oris, gyrs, path,
     for subj in tqdm(range(gyrs.shape[0]), leave=True):
         if resume_optim and subj < output.shape[0]:
             continue
-        segment_directions = ['Right segment', 'Left segment']
+        segment_list = ['Segment 1', 'Segment 2']
 
-        for ori, gyr, dir_ in zip(np.split(oris[subj], 2, -1), 
+        for ori, gyr, seg in zip(np.split(oris[subj], 2, -1), 
                                   np.split(gyrs[subj], 2, -1),
-                                  segment_directions):            
+                                  segment_list):            
         
-            with trange(gyrs.shape[1]-1, desc=dir_, leave=False) as t:
+            with trange(gyrs.shape[1]-1, desc=seg, leave=False) as t:
                 for frame in t:
                     prev_ori = ori[frame]
                     curr_ori = ori[frame+1]
@@ -58,8 +58,8 @@ def optimize_entire_frames(oris, gyrs, path,
                     msg = "Error (1e-6): %.3f"%(result.fun*1e6)
                     t.set_postfix_str(msg, refresh=True)
 
-            # Optimize both segment directions (right and left)
-            if dir_ == 'Right segment':
+            # Optimize both segments
+            if seg == 'Right segment':
                 new_oris[subj, :, :4] = ori.copy()
             else:
                 new_oris[subj, :, 4:] = ori.copy()

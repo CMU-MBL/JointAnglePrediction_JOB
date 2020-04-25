@@ -127,3 +127,54 @@ def optim_single_frame(prev_ori, curr_ori, label_gyr, optim_method, maxiter, gto
                       options=options)
     
     return res
+
+
+def optimization_demo(oris, gyrs,
+                      result_file='optim_angle.npy',
+                      optim_method='BFGS',
+                      maxiter=200,
+                      gtol=1e-5,
+                      ftol=1e-6,
+                      **kwargs):
+    
+    new_oris = oris.copy()
+    for subj in tqdm(range(gyrs.shape[0]), leave=True):
+        segment_list = ['Segment 1', 'Segment 2']
+
+        for ori, gyr, seg in zip(np.split(oris[subj], 2, -1), 
+                                  np.split(gyrs[subj], 2, -1),
+                                  segment_list):            
+        
+            with trange(gyrs.shape[1]-1, desc=seg, leave=False) as t:
+                for frame in t:
+                    prev_ori = ori[frame]
+                    curr_ori = ori[frame+1]
+                    label_gyr = gyr[frame+1]
+
+                    result = optim_single_frame(prev_ori, 
+                                                curr_ori, 
+                                                label_gyr,
+                                                optim_method,
+                                                maxiter,
+                                                gtol,
+                                                ftol)
+
+                    ori[frame+1] = result.x
+                    msg = "Error (1e-6): %.3f"%(result.fun*1e6)
+                    t.set_postfix_str(msg, refresh=True)
+
+            # Optimize both segments
+            if seg == 'Right segment':
+                new_oris[subj, :, :4] = ori.copy()
+            else:
+                new_oris[subj, :, 4:] = ori.copy()
+
+
+        # Calculate joint angle from optimized orientation
+        optim_angle = oris_to_angle(new_oris[subj])
+        if subj == 0:
+            output = optim_angle[None]
+        else:
+            output = np.concatenate((output, optim_angle[None]), axis=0)
+
+        return output

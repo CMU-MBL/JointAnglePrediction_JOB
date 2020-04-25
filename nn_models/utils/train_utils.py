@@ -105,10 +105,7 @@ def validate(model, criterion, x_val, y_val):
 
     with torch.no_grad():
         model.eval()
-        try:
-            y_pred_val = model(x_val)
-        except:
-            y_pred_val = model(x_val)
+        y_pred_val = model(x_val)
         val_loss = criterion(y_pred_val, y_val)
         model.train()
 
