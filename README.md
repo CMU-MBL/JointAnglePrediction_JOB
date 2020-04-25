@@ -38,7 +38,27 @@
   pip install -r requirements.txt
   ```
   
-  # How to run:
+  # How to run (Demo version):
+  This demo version code allows you to run the framework using your own data. Following steps are required.
+  ## 1. Preparation
+  You should prepare each IMU data (acceleration and angular velocity) of two segments and ground truth (optional) of joint angle. Also prepare trained model of angle and orientation predictor. In the model folder, both ```model.pt``` and ```model_kwargs.pkl``` should be exist.
+  
+  ## 2. Run the code
+  ```bash
+  python demo.py --joint <the type of joint ('knee', 'hip', 'ankle') \\
+                 --activity <the type of activity ('walking', 'running') \\
+                 --seg1-accel-path <path of segment 1 acceleration data> \\
+                 --seg2-accel-path <path of segment 2 acceleration data> \\
+                 --seg1-gyro-path <path of segment 1 angular velocity data> \\
+                 --seg2-gyro-path <path of segment 2 angular velocity data> \\
+                 --angle-model-fldr <folder path of angle prediction model> \\
+                 --ori-model-fldr <folder path of orientation prediction model> \\
+                 --result-fldr <folder to save the result files> \\
+                 --use-cuda <cuda configuration (True, False)> \\
+                 --gt-angle-path <path of ground truth angle data (optional)>
+  ```
+  
+  # How to run (Entire Framework):
   ## 1. Data preprocessing
   ```bash
   # Purpose of the file
