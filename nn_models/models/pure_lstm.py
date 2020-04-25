@@ -11,6 +11,7 @@ class CustomLSTM(nn.Module):
     def __init__(self, inp_size=[42], outp_size=[18], layers=[80, 80],
                  dropout=[0, 0], bidir=False, **kwargs):
         super(CustomLSTM, self).__init__()
+
         self.sizes = inp_size + layers + outp_size
         self.num_layers = len(layers)
         # Dropout adds after all but last layer, so non-zero dropout requires num_layers>1

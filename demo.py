@@ -1,8 +1,8 @@
 from nn_models.models.pure_conv import CustomConv1D
 from nn_models.models.pure_lstm import CustomLSTM
 
-import sys; sys.path.append('2_optimization')
-from utils.optimization_utils import optimization_demo
+import sys; sys.path.append('./2_optimization/utils')
+from optimization_utils import optimization_demo
 
 import numpy as np
 import pandas as pd
@@ -17,11 +17,11 @@ def run_demo(inpt_data, gyro_data, angle_model, ori_model, alpha, result_fldr, g
     with torch.no_grad():
         # Predict angle
         angle_model.eval()
-        nn_result = model(inpt_data)
+        nn_result = angle_model(inpt_data)
 
         # Predict orientation
         ori_model.eval()
-        ori_pred = model(inpt_data)
+        ori_pred = ori_model(inpt_data)
 
         nn_result = nn_result.detach().cpu().double().numpy()
         ori_pred = ori_pred.detach().cpu().double().numpy()
@@ -44,10 +44,10 @@ def run_demo(inpt_data, gyro_data, angle_model, ori_model, alpha, result_fldr, g
     np.save(osp.join(result_fldr, "calib_combined_result.npy"), calib_combined_result)
 
     if gt_data is not None:
-        mse_nn_result = np.sqrt(((nn_result - gt_data)***2).mean(axis=1)).mean(axis=0)
-        mse_opt_result = np.sqrt(((combined_result - gt_data)***2).mean(axis=1)).mean(axis=0)
-        mse_calib_nn_result = np.sqrt(((nn_result - gt_data)***2).mean(axis=1)).mean(axis=0)
-        mse_calib_opt_result =np.sqrt(((calib_combined_result - gt_data)***2).mean(axis=1)).mean(axis=0)
+        mse_nn_result = np.sqrt(((nn_result - gt_data)**2).mean(axis=1)).mean(axis=0)
+        mse_opt_result = np.sqrt(((combined_result - gt_data)**2).mean(axis=1)).mean(axis=0)
+        mse_calib_nn_result = np.sqrt(((nn_result - gt_data)**2).mean(axis=1)).mean(axis=0)
+        mse_calib_opt_result =np.sqrt(((calib_combined_result - gt_data)**2).mean(axis=1)).mean(axis=0)
 
     #TODO: Save csv file using pandas
 
@@ -61,6 +61,7 @@ def load_custom_data(path, is_gt_data=False):
     
     if path[-3:] == "npy":
         _data = np.load(path)
+        _data = torch.from_numpy(_data)
     elif path[-3:] == "pkl":
         with open(path, "rb") as fopen:
             _data = pickle.load(fopen)
@@ -78,15 +79,17 @@ def load_custom_data(path, is_gt_data=False):
         _data = _data[None]
     
     if is_gt_data:
-        return _data.double().numpy()
-
-    sz_b, sz_l, sz_d = _data.size()
+        if isinstance(_data, torch.Tensor):
+            _data = _data.double().numpy()
+        return _data
+    
+    sz_b, sz_l, sz_d = _data.shape
     assert sz_d in [3, 4], "Dimension of imu data should be 3 or 4"
     
     if sz_d == 3:
         norm = torch.norm(_data, p='fro', dim=-1, keepdim=True)
         _data = torch.cat([_data, norm], dim=-1)
-
+    
     return _data
 
 
@@ -159,19 +162,19 @@ if __name__ == "__main__":
         gt_angle = load_custom_data(gt_angle_path, is_gt_data=True)
     else:
         gt_angle = None
+    
+    inpt_data = torch.cat([seg1_accel, seg1_gyro, seg2_accel, seg2_gyro], dim=-1)
+    inpt_data = inpt_data.to(device=device, dtype=dtype)
 
-    inpt_data = torch.cat([seg1_accel, seg1_ori, seg2_accel, seg2_ori], dim=-1)
-    inpt_data.to(device=device, dtype=dtype)
-
-    inpt_gyro = torch.cat([seg1_gyro, seg2_gyro], dim=-1)
+    inpt_gyro = torch.cat([seg1_gyro[:, :, :-1], seg2_gyro[:, :, :-1]], dim=-1)
     inpt_gyro = inpt_gyro.double().numpy()
 
     # Load prediction model
     for model_fldr in [angle_model_fldr, ori_model_fldr]:
         with open(osp.join(model_fldr, "model_kwargs.pkl"), "rb") as fopen:
             model_kwargs = pickle.load(fopen)
-        model = CustomConv1D(model_kwargs) if model_kwargs["model_type"] == "CustomConv1D" \
-                                           else CustomLSTM(model_kwargs)
+        model = globals()['CustomConv1D'](**model_kwargs) if model_kwargs["model_type"] == "CustomConv1D" \
+                                                          else globals()['CustomLSTM'](**model_kwargs)
         state_dict = torch.load(osp.join(model_fldr, "model.pt"))
         model.load_state_dict(state_dict)
         model.to(device=device, dtype=dtype)
@@ -198,4 +201,4 @@ if __name__ == "__main__":
         elif joint == "ankle":
             alpha = np.array([0.38, 0.98, 0.62])
 
-    run_demo(inpt_data, inpt_gyro, angle_model, ori_model, alpha, result_fldr, gt_angle=gt_angle)
+    run_demo(inpt_data, inpt_gyro, angle_model, ori_model, alpha, result_fldr, gt_data=gt_angle)
