@@ -13,7 +13,7 @@ import argparse
 from os import path as osp
 
 
-def run_demo(inpt_data, gyro_data, gt_data, angle_model, ori_model, alpha, result_fldr):
+def run_demo(inpt_data, gyro_data, angle_model, ori_model, alpha, result_fldr, gt_data=None):
     with torch.no_grad():
         # Predict angle
         angle_model.eval()
@@ -43,10 +43,11 @@ def run_demo(inpt_data, gyro_data, gt_data, angle_model, ori_model, alpha, resul
     np.save(osp.join(result_fldr, "calib_nn_result.npy"), calib_nn_result)
     np.save(osp.join(result_fldr, "calib_combined_result.npy"), calib_combined_result)
 
-    mse_nn_result = np.sqrt(((nn_result - gt_data)***2).mean(axis=1)).mean(axis=0)
-    mse_opt_result = np.sqrt(((combined_result - gt_data)***2).mean(axis=1)).mean(axis=0)
-    mse_calib_nn_result = np.sqrt(((nn_result - gt_data)***2).mean(axis=1)).mean(axis=0)
-    mse_calib_opt_result =np.sqrt(((calib_combined_result - gt_data)***2).mean(axis=1)).mean(axis=0)
+    if gt_data is not None:
+        mse_nn_result = np.sqrt(((nn_result - gt_data)***2).mean(axis=1)).mean(axis=0)
+        mse_opt_result = np.sqrt(((combined_result - gt_data)***2).mean(axis=1)).mean(axis=0)
+        mse_calib_nn_result = np.sqrt(((nn_result - gt_data)***2).mean(axis=1)).mean(axis=0)
+        mse_calib_opt_result =np.sqrt(((calib_combined_result - gt_data)***2).mean(axis=1)).mean(axis=0)
 
     #TODO: Save csv file using pandas
 
@@ -100,23 +101,18 @@ if __name__ == "__main__":
                         type=str, help="The type of activity")
 
     parser.add_argument('--seg1-accel-path', type=str, 
-                        default="",
                         help="custom data (segment 1 acceleration) path")
     
     parser.add_argument('--seg2-accel-path', type=str, 
-                        default="",
                         help="custom data (segment 2 acceleration) path")
     
     parser.add_argument('--seg1-gyro-path', type=str, 
-                        default="",
                         help="custom data (segment 1 gyroscope) path")
     
     parser.add_argument('--seg2-gyro-path', type=str, 
-                        default="",
                         help="custom data (segment 2 gyroscope) path")
 
-    parser.add_argument('--gt-angle-path', type=str, 
-                        default="",
+    parser.add_argument('--gt-angle-path', type=str,  default="",
                         help="custom data (ground-truth angle) path")
 
     parser.add_argument('--angle-model-fldr', type=str, 
@@ -158,7 +154,11 @@ if __name__ == "__main__":
     seg2_accel = load_custom_data(seg2_accel_path)
     seg1_gyro = load_custom_data(seg1_gyro_path)
     seg2_gyro = load_custom_data(seg2_gyro_path)
-    gt_angle = load_custom_data(gt_angle_path, is_gt_data=True)
+
+    if gt_angle_path is not "":
+        gt_angle = load_custom_data(gt_angle_path, is_gt_data=True)
+    else:
+        gt_angle = None
 
     inpt_data = torch.cat([seg1_accel, seg1_ori, seg2_accel, seg2_ori], dim=-1)
     inpt_data.to(device=device, dtype=dtype)
@@ -198,4 +198,4 @@ if __name__ == "__main__":
         elif joint == "ankle":
             alpha = np.array([0.38, 0.98, 0.62])
 
-    run_demo(inpt_data, inpt_gyro, gt_angle, angle_model, ori_model, alpha, result_fldr)
+    run_demo(inpt_data, inpt_gyro, angle_model, ori_model, alpha, result_fldr, gt_angle=gt_angle)
