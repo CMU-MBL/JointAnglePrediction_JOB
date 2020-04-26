@@ -1,12 +1,11 @@
 torch>=1.4.0
 numpy>=1.18.1
 scipy>=1.4.1
-quaternion>=2019.10.3.10.26.21
 tqdm>=4.45.0
 argparse>=1.4.0
 pandas>=0.25.1
 matplotlib>=3.1.1
 h5py>=2.8.0
-logging>=0.5.1.2
-json>=2.0.9
 json2html>=1.3.0
+numpy numpy-quaternion
+numba
