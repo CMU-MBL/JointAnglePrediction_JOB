@@ -44,10 +44,11 @@ def run_demo(inpt_data, gyro_data, angle_model, ori_model, alpha, result_fldr, g
     np.save(osp.join(result_fldr, "calib_combined_result.npy"), calib_combined_result)
 
     if gt_data is not None:
+        calibrated_gt_data = gt_data - gt_data.mean(axis=1)[:, None, :]
         mse_nn_result = np.sqrt(((nn_result - gt_data)**2).mean(axis=1)).mean(axis=0)
         mse_opt_result = np.sqrt(((combined_result - gt_data)**2).mean(axis=1)).mean(axis=0)
-        mse_calib_nn_result = np.sqrt(((nn_result - gt_data)**2).mean(axis=1)).mean(axis=0)
-        mse_calib_opt_result =np.sqrt(((calib_combined_result - gt_data)**2).mean(axis=1)).mean(axis=0)
+        mse_calib_nn_result = np.sqrt(((nn_result - calibrated_gt_data)**2).mean(axis=1)).mean(axis=0)
+        mse_calib_opt_result =np.sqrt(((calib_combined_result - calibrated_gt_data)**2).mean(axis=1)).mean(axis=0)
 
     #TODO: Save csv file using pandas
 
