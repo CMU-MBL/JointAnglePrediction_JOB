@@ -7,5 +7,5 @@ pandas>=0.25.1
 matplotlib>=3.1.1
 h5py>=2.8.0
 json2html>=1.3.0
-numpy numpy-quaternion
+numpy-quaternion
 numba
