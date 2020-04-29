@@ -45,16 +45,16 @@
   
   ## 2. Run the code
   ```bash
-  python demo.py --joint <the type of joint ('knee', 'hip', 'ankle') \\
-                 --activity <the type of activity ('walking', 'running') \\
-                 --seg1-accel-path <path of segment 1 acceleration data> \\
-                 --seg2-accel-path <path of segment 2 acceleration data> \\
-                 --seg1-gyro-path <path of segment 1 angular velocity data> \\
-                 --seg2-gyro-path <path of segment 2 angular velocity data> \\
-                 --angle-model-fldr <folder path of angle prediction model> \\
-                 --ori-model-fldr <folder path of orientation prediction model> \\
-                 --result-fldr <folder to save the result files> \\
-                 --use-cuda <cuda configuration (True, False)> \\
+  python demo.py --joint <the type of joint ('knee', 'hip', 'ankle') \
+                 --activity <the type of activity ('walking', 'running') \
+                 --seg1-accel-path <path of segment 1 acceleration data> \
+                 --seg2-accel-path <path of segment 2 acceleration data> \
+                 --seg1-gyro-path <path of segment 1 angular velocity data> \
+                 --seg2-gyro-path <path of segment 2 angular velocity data> \
+                 --angle-model-fldr <folder path of angle prediction model> \
+                 --ori-model-fldr <folder path of orientation prediction model> \
+                 --result-fldr <folder to save the result files> \
+                 --use-cuda <cuda configuration (True, False)> \
                  --gt-angle-path <path of ground truth angle data (optional)>
   ```
   

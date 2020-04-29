@@ -24,6 +24,7 @@
 ######################
 Data
 __pycache__
+tmp*
 
 # Logs and databases #
 ######################

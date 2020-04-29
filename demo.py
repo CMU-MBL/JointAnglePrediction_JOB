@@ -13,8 +13,16 @@ import argparse
 from os import path as osp
 
 
-def run_demo(inpt_data, gyro_data, angle_model, ori_model, alpha, result_fldr, gt_data=None):
+def run_demo(inpt_data, gyro_data, 
+             angle_norm_dict, ori_norm_dict, 
+             angle_model, ori_model, 
+             alpha, result_fldr, 
+             gt_data=None):
+    
     with torch.no_grad():
+        # normalize input data
+        inpt_data = (inpt_data - angle_norm_dict['x_mean']) / angle_norm_dict['x_std']
+        
         # Predict angle
         angle_model.eval()
         nn_result = angle_model(inpt_data)
@@ -23,11 +31,16 @@ def run_demo(inpt_data, gyro_data, angle_model, ori_model, alpha, result_fldr, g
         ori_model.eval()
         ori_pred = ori_model(inpt_data)
 
+        # Un-normalize output prediction
+        nn_result = nn_result * angle_norm_dict['y_std'] + angle_norm_dict['y_mean']
+        ori_pred = ori_pred * ori_norm_dict['y_std'] + ori_norm_dict['y_mean']
+
         nn_result = nn_result.detach().cpu().double().numpy()
         ori_pred = ori_pred.detach().cpu().double().numpy()
 
     # Optimize orientation
     opt_result = optimization_demo(ori_pred, gyro_data)
+    opt_result = opt_result - opt_result.mean(axis=1)[:, None] + nn_result.mean(axis=1)[:, None]
 
     combined_result = alpha * nn_result + (1 - alpha) * opt_result
 
@@ -44,11 +57,11 @@ def run_demo(inpt_data, gyro_data, angle_model, ori_model, alpha, result_fldr, g
     np.save(osp.join(result_fldr, "calib_combined_result.npy"), calib_combined_result)
 
     if gt_data is not None:
-        calibrated_gt_data = gt_data - gt_data.mean(axis=1)[:, None, :]
+        calib_gt_data = gt_data - gt_data.mean(axis=1)[:, None, :]
         mse_nn_result = np.sqrt(((nn_result - gt_data)**2).mean(axis=1)).mean(axis=0)
         mse_opt_result = np.sqrt(((combined_result - gt_data)**2).mean(axis=1)).mean(axis=0)
-        mse_calib_nn_result = np.sqrt(((nn_result - calibrated_gt_data)**2).mean(axis=1)).mean(axis=0)
-        mse_calib_opt_result =np.sqrt(((calib_combined_result - calibrated_gt_data)**2).mean(axis=1)).mean(axis=0)
+        mse_calib_nn_result = np.sqrt(((calib_nn_result - calib_gt_data)**2).mean(axis=1)).mean(axis=0)
+        mse_calib_opt_result = np.sqrt(((calib_combined_result - calib_gt_data)**2).mean(axis=1)).mean(axis=0)
 
     #TODO: Save csv file using pandas
 
@@ -182,8 +195,11 @@ if __name__ == "__main__":
         
         if model_fldr == angle_model_fldr:
             angle_model = model
+            angle_norm_dict = torch.load(osp.join(model_fldr, "norm_dict.pt"))['params']
+        
         else:
             ori_model = model
+            ori_norm_dict = torch.load(osp.join(model_fldr, "norm_dict.pt"))['params']        
 
     # Get weight prior alpha
     if activity == "walking":
@@ -201,5 +217,8 @@ if __name__ == "__main__":
             alpha = np.array([0.20, 0.95, 0.97])
         elif joint == "ankle":
             alpha = np.array([0.38, 0.98, 0.62])
-
-    run_demo(inpt_data, inpt_gyro, angle_model, ori_model, alpha, result_fldr, gt_data=gt_angle)
+    
+    run_demo(inpt_data, inpt_gyro, angle_norm_dict, 
+             ori_norm_dict, angle_model, 
+             ori_model, alpha, result_fldr, 
+             gt_data=gt_angle)

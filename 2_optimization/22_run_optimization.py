@@ -93,9 +93,6 @@ if __name__ == '__main__':
     parser.add_argument('--result_file', type=str, default='optim_angle.npy',
                         help='The name of optimization result file')
 
-    parser.add_argument('--exp-name', type=str, default='exp1',
-                        help='The name of experiment')
-    
     parser.add_argument('--activity', default=['Walking', 'Running'], nargs='*', type=str,
                         help='Activity to optimize either one of Walking or Running')
 
@@ -129,7 +126,6 @@ if __name__ == '__main__':
     
     pred_ori_path = args.pred_ori_path
     result_path = args.result_path
-    exp_name = args.exp_name
     result_file = args.result_file
     
     activity_lists = args.activity
@@ -146,7 +142,7 @@ if __name__ == '__main__':
 
     for activity in activity_lists:
         for joint in joint_lists:
-            output_path = osp.join(result_path, activity, joint, exp_name)
+            output_path = osp.join(result_path, activity, joint)
             if not osp.exists(output_path):
                 os.makedirs(output_path)
             
