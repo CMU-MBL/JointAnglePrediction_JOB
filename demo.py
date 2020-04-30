@@ -4,13 +4,53 @@ from nn_models.models.pure_lstm import CustomLSTM
 import sys; sys.path.append('./2_optimization/utils')
 from optimization_utils import optimization_demo
 
+import torch
 import numpy as np
 import pandas as pd
-import torch
+import matplotlib.pyplot as plt
 
 import pickle
 import argparse
 from os import path as osp
+
+
+def viz_angle_result(angle_list, label_list, title=None):
+    '''
+    Plots resultant angles on one plot, dependant on the list of angles and labels provided
+    '''
+    # Converts inputs to list if not already
+    if type(angle_list) is not list:
+        angle_list = [angle_list]
+        label_list = [label_list]
+    txt_size = 10
+    fig_h = 8
+    fig_w = 15
+    line = 3
+    pad = 20
+    dof = ['Flexion', 'Adduction', 'Rotation']
+    plt.rc('font', size=txt_size)
+    fig, ax_array = plt.subplots(3, 1, sharex=True, figsize=(fig_w, fig_h))
+    if title is not None:
+        ax_array[0].set_title(title)
+    # Cycles through each angle/label
+    for i in range(len(angle_list)):
+        # Checks if subj data is 2 or 3 dimensional array
+        if angle_list[i].ndim == 3:
+            subj_data = angle_list[i][0, :, :]
+        else:
+            subj_data = angle_list[i]
+        # Cycles through each degree of freedom
+        for j in range(subj_data.shape[1]):
+            angle_data = subj_data[:, j]
+            ax = ax_array[j]
+            ax.plot(angle_data, label=label_list[i], linewidth=line)
+            if i == len(angle_list)-1:
+                ax.set_ylabel(dof[j]+' Angle [deg]', labelpad=pad)
+                ax.spines['right'].set_visible(False)
+                ax.spines['top'].set_visible(False)
+                if j == subj_data.shape[1]-1:
+                    ax.legend(frameon=False)
+    plt.tight_layout()
 
 
 def run_demo(inpt_data, gyro_data, 

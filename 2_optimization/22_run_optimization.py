@@ -155,7 +155,7 @@ if __name__ == '__main__':
             inpt_gyr = np.load(inpt_gyr_file)[:, :, [4, 5, 6, 12, 13, 14]]
 
             print("Starting optimization | %s %s set"%(activity, joint))
-            
+
             # Running script
             optimize_entire_frames(pred_ori, 
                                    inpt_gyr, 
