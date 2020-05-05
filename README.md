@@ -1,17 +1,5 @@
 # JointAnglePrediction_JOB
 
-## Pathway to run framework - 
-    00_matlab_to_python\
-    0_preprocessing\
-    1_nn_hyperopt_training\
-
-## Folders (each folder contains its own readme.txt file) -
-    00_matlab_to_python\ - Scripts for converting .mat file in .h5 file
-    0_preprocessing\ - Scripts for preprocessing dataset for deep learning
-    1_nn_hyperopt_training\ - Scripts for training neural network and optimizaing hyperparameters using hyperopt
-    biomech_model\ - Scripts for simulating biomechanical features
-    nn_models\ - Scripts for creating and training neural network models
-    
  # Installation:
  ## 1. Download source code via git clone
  ```bash
