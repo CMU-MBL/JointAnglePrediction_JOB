@@ -39,9 +39,9 @@
   ```
   
   # How to run (Demo version):
-  This demo version code allows you to run the framework using your own data. Following steps are required.
+  This demo version of the code allows you to run the framework using your own IMU data. The following steps are required.
   ## 1. Preparation
-  You should prepare each IMU data (acceleration and angular velocity) of two segments and ground truth (optional) of joint angle. Also prepare trained model of angle and orientation predictor. In the model folder, both ```model.pt``` and ```model_kwargs.pkl``` should be exist.
+  IMU data (acceleration and angular velocity) from two segments and ground truth joint angle (optional), as well as the trained model of angle and orientation are needed. In the model folder, both ```model.pt``` and ```model_kwargs.pkl``` should exist.
   
   ## 2. Run the code
   ```bash
