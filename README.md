@@ -25,14 +25,16 @@
   The scripts will automatically generate result folders under ```Data```. But if you have your own preferrence in data structure, please go to the script and modify each path values.
   
   ## 3. Install requirement libraries
+  You can install all required libraries by running:
   ```bash
   pip install -r requirements.txt
   ```
+  However, we recommend you to create new virtual environment (such as conda) and install those requirements. But in any case your workstation has problem with running or installing the libraries, please report it on Issues tab.
   
   # How to run (Demo version):
   This demo version of the code allows you to run the framework using your own IMU data. The following steps are required.
   ## 1. Preparation
-  IMU data (acceleration and angular velocity) from two segments and ground truth joint angle (optional), as well as the trained model of angle and orientation are needed. In the model folder, both ```model.pt``` (pretrained model), ```model_kwargs.pkl``` (model key arguments), and ```norm_dict.pt``` normalization dictionary should exist. Which means that your custom data structure should look like
+  IMU data (acceleration and angular velocity) from two segments and ground truth joint angle (optional), as well as the trained model of angle and orientation are needed. In the model folder, both ```model.pt``` (pretrained model), ```model_kwargs.pkl``` (model key arguments), and ```norm_dict.pt``` (normalization dictionary) should exist. Which means that your custom data structure should look like
 ```
 Your root-path          | <Left or Right>_seg1_acc.npy
                         | <Left or Right>_seg2_acc.npy
