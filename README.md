@@ -12,10 +12,16 @@
   cd JointAnglePrediction_JOB && mkdir Data
   mv <your extracted data folder> ./Data/
   ```
+  or you can put your data at ```SomeDir``` and
+  ```bash
+  cd JointAnglePrediction_JOB
+  ln -s <dir to SomeDir> ./Data
+  ```
+  
   ```
   # Desired data folder structure
   JointAnglePrediction_JOB | Data  | 1_Extracted        | walking/running_meta.h5
-                                   | 2_Processed
+                                   | 2_Processed        | walking/running_data.h5
                                    | 3_Hyperopt_Results
                                    | 4_Best_Results
                                    | 5_Optimization
@@ -63,26 +69,32 @@
   ```bash
   # Given processed and checked dataset, this script trains both CNNs and LSTMs utilizing hyperparameter optimization to predict joint kinematics.
   # Hyperopt sweeps over given sets of parameters, and each evaluation tries a different combination of those parameters.
-  python 1_nn_hyperopt_training/11_optimize_hyperparams.py
+  python _1_nn_hyperopt_training/11_optimize_hyperparams.py
   ```
   
   ```bash
   # This script compiles the model results from optimizing the hyperparameters and outputs an Excel file to compare the different performances.
-  python 1_nn_hyperopt_training/12_summarize_results.py
+  python _1_nn_hyperopt_training/12_summarize_results.py
   ```
   
   ```bash
   # This script compares the performances of the model results and saves the best performing model configuration in a separate directory for use in the framework.
-  python 1_nn_hyperopt_training/13_get_best_results.py
+  python _1_nn_hyperopt_training/13_get_best_results.py
   ```
   
   ## 3. Run optimization
   ```bash
   # Predict orientation value from neural network
-  python 2_optimization/21_predict_orientation.py
+  python _2_optimization/21_predict_orientation.py
   ```
   
   ```bash
+  # Get optimization parameters (weight, scale factor)
+  python _2_optimization/22_get_optimization_parameters.py
+  
   # Run top-down optimization which minimizes reconstruction error of angular velocity data
-  python 2_optimization/22_run_optimization.py
+  python _2_optimization/23_run_optimization.py
+  
+  # Calculate performance of optimization
+  python _2_optimization/24_get_final_results.py
   ```
