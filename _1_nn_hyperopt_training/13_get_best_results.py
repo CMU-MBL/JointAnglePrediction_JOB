@@ -18,7 +18,7 @@ if __name__ == '__main__':
     new_path = 'Data/4_Best_Hyperopt'
 
     act_list = ['Walking', 'Running']
-    sub_folders = ['hip', 'knee', 'ankle']
+    sub_folders = ['Hip', 'Knee', 'Ankle']
 
     for tfldr in act_list:
         task_path = os.path.join(base_path, tfldr)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
             score = np.mean(rmses, axis=1, keepdims=True)
             # Get index of best models
             best_idx = np.argmin(score)
-            best_model_name = model_paths[best_idx].split('\\')[-1]
+            best_model_name = model_paths[best_idx].split('/')[-1]
             dest = os.path.join(new_path, tfldr, sfldr, best_model_name)
             shutil.copytree(model_paths[best_idx], dest)
 
@@ -52,9 +52,6 @@ if __name__ == '__main__':
     # Creates spreadsheet summary
     #
 
-    col_keys = {'hip': ['hip'],
-                'knee': ['knee'],
-                'ankle': ['ankle']}
     col_angles = ['Score', 'Flex', 'Add', 'Rot']
     angle_metrics = ['Mean', 'Median', 'Std']
     model_strings = ['conv*', 'lstm*']
@@ -69,16 +66,16 @@ if __name__ == '__main__':
             for i, model_str in enumerate(model_strings):
                 # Creates dataframe of validation and test data
                 val_df = eval_utils.create_hyperopt_df(
-                    col_keys[fldr], col_angles, angle_metrics)
+                    [fldr], col_angles, angle_metrics)
                 test_df = eval_utils.create_hyperopt_df(
-                    col_keys[fldr], col_angles, angle_metrics)
+                    [fldr], col_angles, angle_metrics)
 
                 pth = result_path + fldr + '/'
                 # Summarize all models
                 model_paths = glob(pth + model_str)
                 model_paths.sort()
                 for model in model_paths:
-                    model_name = model.replace('\\', '/').split('/')[-1]
+                    model_name = model.split('/')[-1]
 
                     x_val, y_val, y_pred_val, x_test, y_test, y_pred_test = \
                         eval_utils.load_predictions(model)
@@ -87,10 +84,10 @@ if __name__ == '__main__':
 
                     # Adds validation RMSE data to spreadsheet
                     val_df = eval_utils.add_hyperopt_summary(
-                        val_df, val_rmse, model_name, col_keys[fldr], col_angles, angle_metrics)
+                        val_df, val_rmse, model_name, [fldr], col_angles, angle_metrics)
                     # Adds test RMSE data to spreadsheet
                     test_df = eval_utils.add_hyperopt_summary(
-                        test_df, test_rmse, model_name, col_keys[fldr], col_angles, angle_metrics)
+                        test_df, test_rmse, model_name, [fldr], col_angles, angle_metrics)
 
                 # Write to excel (validation on left, test on right)
                 val_df.to_excel(writer, sheet_name=fldr, startrow=curr_num_rows, startcol=0)

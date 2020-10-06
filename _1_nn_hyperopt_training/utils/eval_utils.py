@@ -26,13 +26,12 @@ def create_hyperopt_df(col_names, col_angles, angle_metrics):
     return df
 
 
-def add_hyperopt_summary(df, rmse, model_name,
-                         col_names, col_angles, angle_metrics, opt_result=False):
+def add_hyperopt_summary(df, rmse, model_name, col_names, col_angles, angle_metrics):
     # Adds hyperopt results to dataframe for each metric
 
     for i, col in enumerate(col_names):
         for j, angle in enumerate(col_angles):
-            col_idx = i*3 + j if opt_result else i*3 + j - 1
+            col_idx = i*3 + j if len(col_angles) == 3 else i*3 + j - 1
             if angle == 'Score':
                 col_tuple = (col, angle, 'Avg. RMSE')
                 df_value = np.mean(np.mean(rmse[:, :], axis=0))

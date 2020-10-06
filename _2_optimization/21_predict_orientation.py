@@ -61,8 +61,8 @@ if __name__ == '__main__':
 
     for activity in ['Walking', 'Running']:
         data_file = 'walking_data.h5' if activity == 'Walking' else 'running_data.h5'
-        data_path = osp.join('Data', '2_Processed_rotmat', data_file)
-        base_result_path = osp.join('Data/5_Optimization/NN_Prediction_', activity)
+        data_path = osp.join('Data', '2_Processed', data_file)
+        base_result_path = osp.join('Data/5_Optimization/NN_Prediction', activity)
 
         for (inp, outp, fldr) in zip(inp_lists, outp_lists, folder_names):
             result_path = osp.join(base_result_path, fldr) + '/'

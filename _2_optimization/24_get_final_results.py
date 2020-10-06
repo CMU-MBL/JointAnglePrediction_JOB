@@ -55,21 +55,13 @@ def calculate_results(gt_angle, alpha, beta, std_ratio, weight, act, joint, cali
     std_opt = np.sqrt(((gt_angle - theta)**2).mean(1)).std(0)
 
     show_results(rmse_nn, std_nn, rmse_opt, std_opt, act, joint, calib)
-    
-    if joint == 'Hip':
-        import pdb; pdb.set_trace()
+
 
 if __name__ == '__main__':
 
-    angle_path = 'Data/3_Results/rotmat_data/angle'
-    
-    # Optimization
+    angle_path = 'Data/4_Best_Hyperopt/'
     opt_path = 'Data/5_Optimization/Results'
     opt_exp = 'predictions'
-
-    # Ground Truth
-    opt_path = 'Data/3_Results/rotmat_data/orientation'
-    opt_exp = 'bidir_lstm_70_70_70/predictions'
 
     params_file = 'Data/5_Optimization/parameters.pkl'
 
@@ -88,20 +80,10 @@ if __name__ == '__main__':
             gt_angle = np.load(join(angle_path_, 'y_test.npy'))
             alpha = np.load(join(angle_path_, 'y_pred_test.npy'))
 
-            ## From orientation model path, load ground truth orientation
-            # opt_path_ = join(opt_path, act, joint, opt_exp)
-            # opt_oris = np.load(join(opt_path_, 'optim_ori.npy'))
-            # beta = np.load(join(opt_path_, 'optim_angle.npy'))
-            
-            # Ground Turth
+            # From orientation model path, load ground truth orientation
             opt_path_ = join(opt_path, act, joint, opt_exp)
-            opt_oris = np.load(join(opt_path_, 'y_test.npy'))
-            beta = np.zeros((opt_oris.shape[0], opt_oris.shape[1], 3))
-
-            for subj in range(opt_oris.shape[0]):
-                leg = 'Right' if subj % 2 == 0 else 'Left'                
-                diff = np.transpose(opt_oris[subj, :, :, :3], (0, 2, 1)) @ opt_oris[subj, :, :, 3:]
-                beta[subj] = compute_angle_from_matrix(diff, joint=joint, leg=leg)
+            opt_oris = np.load(join(opt_path_, 'optim_ori.npy'))
+            beta = np.load(join(opt_path_, 'optim_angle.npy'))
             
             std_ratio = params['%s_%s_std'%(joint, act)]
             weight = params['%s_%s_weight'%(joint, act)]

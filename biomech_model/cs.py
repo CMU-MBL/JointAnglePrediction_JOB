@@ -7,10 +7,6 @@
 import numpy as np
 import quaternion
 from scipy.signal import butter, filtfilt
-from scipy.spatial.transform import Rotation as R
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 
 def butter_low(data, order=4, fc=5, fs=100):

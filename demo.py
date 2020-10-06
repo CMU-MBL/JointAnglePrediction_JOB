@@ -32,41 +32,18 @@ def save_to_csv(path, nn, opt, calib_nn, calib_opt):
     """Creates csv file for results"""
     import pandas as pd
 
-    cols = ['RMSE Type', 'Flexion', 'Adduction', 'Rotation']
-    df_one = pd.DataFrame(columns=cols)
-    df_one.loc[0] = ['NN'] + nn.tolist()
-    df_one.loc[1] = ['NN + Opt'] + opt.tolist()
-    df_one.loc[2] = ['Calibrated NN'] + calib_nn.to_list()
-    df_one.loc[3] = ['Calibrated NN + Opt'] + calib_opt.to_list()
-    df_one.to_csv(path+'/RMSE_loss.csv', index=False)
+    if path is not None:
+        cols = ['RMSE Type', 'Flexion', 'Adduction', 'Rotation']
+        df_one = pd.DataFrame(columns=cols)
+        df_one.loc[0] = ['NN'] + nn.tolist()
+        df_one.loc[1] = ['NN + Opt'] + opt.tolist()
+        df_one.loc[2] = ['Calibrated NN'] + calib_nn.to_list()
+        df_one.loc[3] = ['Calibrated NN + Opt'] + calib_opt.to_list()
+        df_one.to_csv(path+'/RMSE_loss.csv', index=False)
 
+    else:
+        pass
 
-def visualize_result(gt_angle, nn_angle, opt_angle, opt_only=None, angle_idx=0):
-    """Draw a angle curves of predictions and ground truth to visualize the performance of estimation"""
-    angles = [gt_angle[:, angle_idx], nn_angle[:, angle_idx], opt_angle[:, angle_idx], opt_only[:, angle_idx]]
-    colors = ['tab:grey', 'tab:blue', 'tab:orange', 'black']
-    labels = ['Ground Truth', 'Neural Network', '+ Optimization', 'Optimization Only']
-    linestyles = ['-', ':', '--', '--']
-    linewidth = 3
-
-    plt.close()
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    x = np.arange(gt_angle.shape[0]) / (gt_angle.shape[0]) * 100
-    
-    for angle, color, label, linestyle in zip(angles, colors, labels, linestyles):
-        if angle is None:
-            continue
-        ax.plot(x, angle, linewidth=linewidth, linestyle=linestyle, color=color, label=label)
-    
-    plt.legend(fontsize=22, frameon=False, loc=2)
-    plt.xlabel('Gait Cycle (%)', fontsize=24)
-    plt.ylabel('Knee Flexion Angle ('r'$\degree$'')', fontsize=24)
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    plt.savefig('Visualization_angle_%d.png'%angle_idx)
-    
 
 def evaluate_result(nn_result, combined_result, gt_angle, result_fldr=None, calib=False):
     """Calculate RMSE result (Neural network, Optimization combined model) by comparing with anatomical markers"""
@@ -96,6 +73,7 @@ def evaluate_result(nn_result, combined_result, gt_angle, result_fldr=None, cali
         rmse_nn_result = np.nan
         rmse_opt_result = np.nan
     
+    # Print on terminal
     calib_print = '(Calibrated)' if calib else '(Uncalibrated)'
     print_result('Neural Network %s  :'%calib_print, rmse_nn_result)
     print_result('Optimization %s    :'%calib_print, rmse_opt_result)
@@ -108,19 +86,14 @@ def run_demo(inpt_data, gyro_data,
              joint='Knee', leg='Left', gt_angle=None,
              **kwargs):
     
-    # if the beginning part of data is not clean, select some intermediate sequence
-    start, end = 2000, 12800
+    # if the beginning part of data is not clean, select some specific sequence to estimate
+    start, end = 0, -1
 
     inpt_data = inpt_data[:1, start:end]
     gyro_data = gyro_data[:1, start:end]
     
     if gt_angle is not None:
         gt_angle = gt_angle[:1, start:end]  
-    
-    # Smooth Ground-truth values
-    b, a = butter(4, 2*5/100, 'low')
-    padlen = min(int(0.5*gt_angle.shape[1]), 200)
-    gt_angle = filtfilt(b, a, gt_angle, padlen=padlen, axis=1)
     
     # Neural Network Prediction
     with torch.no_grad():
@@ -148,12 +121,15 @@ def run_demo(inpt_data, gyro_data,
 
     # Get theta from alpha and beta
     beta = (beta - beta.mean(axis=1)[:, None]) * std_ratio + alpha.mean(axis=1)[:, None]
-    theta = weight * alpha[:, s_:e_] + (1 - weight) * beta
+    theta = weight * alpha[:, start:end] + (1 - weight) * beta
 
-    for calib in [False, True]:
-        evaluate_result(alpha[:, s_:e_], theta, gt_angle[:, s_:e_], 
-                        result_fldr=result_fldr, calib=calib)
-        print('\n\n')
+    rmse_nn, rmse_opt = evaluate_result(alpha[:, start:end], theta, gt_angle[:, start:end], 
+                                        result_fldr=result_fldr, calib=False)
+    print('\n\n')
+    rmse_nn_calib, rmse_opt_calib = evaluate_result(alpha[:, start:end], theta, gt_angle[:, start:end], 
+                                                   result_fldr=result_fldr, calib=True)
+
+    save_to_csv(result_fldr, rmse_nn, rmse_opt, rmse_nn_calib, rmse_opt_calib)
         
         
 
@@ -197,7 +173,7 @@ def load_custom_data(path, is_imu_data=True):
     return _data
 
 
-def prepare_data(root_path, leg):
+def prepare_data(root_path, leg, device, dtype):
     
     seg1_accel_path = osp.join(root_path, '%s_seg1_acc.npy'%leg)
     seg2_accel_path = osp.join(root_path, '%s_seg2_acc.npy'%leg)
@@ -213,6 +189,12 @@ def prepare_data(root_path, leg):
 
     if gt_angle_path is not "":
         gt_angle = load_custom_data(gt_angle_path, is_imu_data=False)
+        
+        # Smooth Ground-truth values
+        b, a = butter(4, 2*5/100, 'low')
+        padlen = min(int(0.5*gt_angle.shape[1]), 200)
+        gt_angle = filtfilt(b, a, gt_angle, padlen=padlen, axis=1)
+    
     else:
         gt_angle = None
 
@@ -265,7 +247,7 @@ if __name__ == "__main__":
     root_path = osp.join(args.root_path, joint)
     leg = 'Left'    # Select the direction of your target leg
 
-    inpt_data, inpt_gyro, gt_angle = prepare_data(root_path, leg)
+    inpt_data, inpt_gyro, gt_angle = prepare_data(root_path, leg, device, dtype)
     
     angle_model_fldr = osp.join(args.angle_model_fldr, activity, joint)
     ori_model_fldr = osp.join(args.ori_model_fldr, activity, joint)

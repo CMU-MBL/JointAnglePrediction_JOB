@@ -72,8 +72,8 @@ if __name__ == "__main__":
     joint_list = ['Hip', 'Knee', 'Ankle']
 
     output_file = 'Data/5_Optimization/parameters_rotmat.pkl'
-    angle_path = 'Data/3_Results/rotmat_data/angle'
-    ori_path = 'Data/3_Results/rotmat_data/orientation'
+    angle_path = 'Data/4_Best_Hyperopt/'
+    ori_path = 'Data/5_Optimization/NN_Prediction'
 
     output = dict()
 

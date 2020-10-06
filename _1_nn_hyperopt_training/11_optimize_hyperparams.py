@@ -9,16 +9,16 @@ from utils.hyperopt_utils import run_model
 if __name__ == '__main__':
 
     # Walking pathways
-    walking_data_path = 'Data/2_Processed_tilt/walking_data.h5'
+    walking_data_path = 'Data/2_Processed/walking_data.h5'
     walking_result_path = 'Data/3_Hyperopt_Results/Walking/'
 
     # Running pathways
-    running_data_path = 'Data/2_Processed_tilt/running_data.h5'
+    running_data_path = 'Data/2_Processed/running_data.h5'
     running_result_path = 'Data/3_Hyperopt_Results/Running/'
 
     # Run through convolution models
     conv_model = 'CustomConv1D'
-    num_eval = 500
+    num_eval = 200
 
     # Run through for each joint
     # Could take days to run, can comment out certain joints nad run in chunks
@@ -40,9 +40,9 @@ if __name__ == '__main__':
         running_data_path, running_result_path, num_eval, conv_model, ['ankle'])
     print('Running convolution complete!\n')
 
-    Run through LSTM models
+    # Run through LSTM models
     lstm_model = 'CustomLSTM'
-    num_eval = 300
+    num_eval = 200
 
     # Run through each joint
     print('Walking LSTM begin...')

@@ -13,11 +13,7 @@ from tqdm import tqdm
 if __name__ == '__main__':
 
     res_path = 'Data/3_Hyperopt_Results/'
-    sub_folders = ['hip', 'knee', 'ankle']
-
-    col_keys = {'hip': ['hip'],
-                'knee': ['knee'],
-                'ankle': ['ankle']}
+    sub_folders = ['Hip', 'Knee', 'Ankle']
     col_angles = ['Score', 'Flex', 'Add', 'Rot']
     angle_metrics = ['Mean', 'Median', 'Std']
     model_strings = ['conv*', 'lstm*']
@@ -34,9 +30,9 @@ if __name__ == '__main__':
             for i, model_str in enumerate(model_strings):
                 # Creates dataframe of validation and test data
                 val_df = eval_utils.create_hyperopt_df(
-                    col_keys[fldr], col_angles, angle_metrics)
+                    [fldr], col_angles, angle_metrics)
                 test_df = eval_utils.create_hyperopt_df(
-                    col_keys[fldr], col_angles, angle_metrics)
+                    [fldr], col_angles, angle_metrics)
 
                 pth = result_path + fldr + '/'
 
@@ -45,7 +41,7 @@ if __name__ == '__main__':
                 model_paths.sort()
                 for exp in tqdm(range(len(model_paths)), leave=True):
                     model = model_paths[exp]
-                    model_name = model.replace('\\', '/').split('/')[-1]
+                    model_name = model.split('/')[-1]
 
                     # Loads predictions and calculates RMSE from model results
                     x_val, y_val, y_pred_val, x_test, y_test, y_pred_test = eval_utils.load_predictions(
@@ -55,10 +51,10 @@ if __name__ == '__main__':
 
                     # Adds validation RMSE data to spreadsheet
                     val_df = eval_utils.add_hyperopt_summary(
-                        val_df, val_rmse, model_name, col_keys[fldr], col_angles, angle_metrics)
+                        val_df, val_rmse, model_name, [fldr], col_angles, angle_metrics)
                     # Adds test RMSE data to spreadsheet
                     test_df = eval_utils.add_hyperopt_summary(
-                        test_df, test_rmse, model_name, col_keys[fldr], col_angles, angle_metrics)
+                        test_df, test_rmse, model_name, [fldr], col_angles, angle_metrics)
 
                 # Write to excel (validation on left, test on right)
                 val_df.to_excel(writer, sheet_name=fldr, startrow=curr_num_rows, startcol=0)
