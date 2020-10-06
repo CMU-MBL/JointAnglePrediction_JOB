@@ -97,13 +97,19 @@ Your orient model-path  | model.pt
   ```bash
   # This script predicts orientation of sensors with fixed hyperparameters of neural networks. The result will be saved in 5_Optimization/NN_Prediction folder
   python _2_optimization/21_predict_orientation.py
+  ```
   
+  ```bash
   # This scripts calculate priors for weighted sum (weight, scale factor) using validation data.
   python _2_optimization/22_get_optimization_parameters.py
+  ```
   
+  ```bash
   # This script runs top-down optimization which minimizes reconstruction error of angular velocity data
   python _2_optimization/23_run_optimization.py
+  ```
   
+  ```bash
   # This script calculates performance of optimization and shows it on the terminal screen
   python _2_optimization/24_get_final_results.py
   ```
