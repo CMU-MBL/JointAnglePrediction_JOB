@@ -12,7 +12,7 @@
   cd JointAnglePrediction_JOB && mkdir Data
   mv <your extracted data folder> ./Data/
   ```
-  or you can put your data at ```SomeDir``` and
+  or you can put your data at ```SomeDir``` and soft-link to the directory by:
   ```bash
   cd JointAnglePrediction_JOB
   ln -s <dir to SomeDir> ./Data
