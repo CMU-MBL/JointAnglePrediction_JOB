@@ -28,6 +28,7 @@
 Data
 __pycache__
 tmp*
+_00_*
 _3_analysis
 
 # Logs and databases #
