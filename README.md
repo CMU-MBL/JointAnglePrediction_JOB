@@ -35,21 +35,32 @@
   # How to run (Demo version):
   This demo version of the code allows you to run the framework using your own IMU data. The following steps are required.
   ## 1. Preparation
-  IMU data (acceleration and angular velocity) from two segments and ground truth joint angle (optional), as well as the trained model of angle and orientation are needed. In the model folder, both ```model.pt``` and ```model_kwargs.pkl``` should exist.
+  IMU data (acceleration and angular velocity) from two segments and ground truth joint angle (optional), as well as the trained model of angle and orientation are needed. In the model folder, both ```model.pt``` (pretrained model), ```model_kwargs.pkl``` (model key arguments), and ```norm_dict.pt``` normalization dictionary should exist. Which means that your custom data structure should look like
+```
+Your root-path          | <Left or Right>_seg1_acc.npy
+                        | <Left or Right>_seg2_acc.npy
+                        | <Left or Right>_seg1_gyr.npy
+                        | <Left or Right>_seg2_gyr.npy
+                        | <Left or Right>_mocap_angle.npy (optional)
+
+Your angle model-path   | model.pt
+                        | model_kwargs.pkl
+                        | norm_dict.pt
+                        
+Your orient model-path  | model.pt
+                        | model_kwargs.pkl
+                        | norm_dict.pt
+```
   
   ## 2. Run the code
   ```bash
-  python demo.py --joint <the type of joint ('knee', 'hip', 'ankle') \
-                 --activity <the type of activity ('walking', 'running') \
-                 --seg1-accel-path <path of segment 1 acceleration data> \
-                 --seg2-accel-path <path of segment 2 acceleration data> \
-                 --seg1-gyro-path <path of segment 1 angular velocity data> \
-                 --seg2-gyro-path <path of segment 2 angular velocity data> \
+  python demo.py --joint <the type of joint ('Knee', 'Hip', 'Ankle') \
+                 --activity <the type of activity ('Walking', 'Running') \
+                 --root-path <path to the folder containing your data> \
                  --angle-model-fldr <folder path of angle prediction model> \
                  --ori-model-fldr <folder path of orientation prediction model> \
                  --result-fldr <folder to save the result files> \
-                 --use-cuda <cuda configuration (True, False)> \
-                 --gt-angle-path <path of ground truth angle data (optional)>
+                 --use-cuda <cuda configuration (True, False)>
   ```
   
   # How to run (Entire Framework):
