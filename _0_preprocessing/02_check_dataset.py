@@ -38,8 +38,8 @@ for act in activity_list:
             # Check all joint angles
             for joint in joint_list:
                 angle_array = fh[sub + '/' + joint + '/angle'][:, :]
-                test_passed, angle_list, locs = check_utils.check_angles(angle_array[200:-200, :])
-                if not test_passed:
+                test_passed_angle, angle_list, locs = check_utils.check_angles(angle_array[200:-200, :])
+                if not test_passed_angle:
                     subj_error_list.append(sub)
                     joint_error_list.append([sub, joint, angle_list])
                     checks_passed = False
@@ -47,8 +47,8 @@ for act in activity_list:
             # Check all accelerations
             for seg in seg_list:
                 acc_array = fh[sub + '/' + seg + '/acc'][:, :]
-                test_passed, axis_list, locs = check_utils.check_acc(acc_array[200:-200, :])
-                if not test_passed:
+                test_passed_acc, axis_list, locs = check_utils.check_acc(acc_array[200:-200, :])
+                if not test_passed_acc:
                     subj_error_list.append(sub)
                     joint_error_list.append([sub, joint, axis_list])
                     checks_passed = False
@@ -56,14 +56,14 @@ for act in activity_list:
             # Check all angular velocities
             for seg in seg_list:
                 gyr_array = fh[sub + '/' + seg + '/gyr'][:, :]
-                test_passed, axis_list, locs = check_utils.check_gyr(gyr_array[200:-200, :])
-                if not test_passed:
+                test_passed_gyr, axis_list, locs = check_utils.check_gyr(gyr_array[200:-200, :])
+                if not test_passed_gyr:
                     subj_error_list.append(sub)
                     joint_error_list.append([sub, joint, axis_list])
                     checks_passed = False
 
             fh[sub].attrs['checks_passed'] = checks_passed
-
+        
         # Remove remaining outliers from the joint angles
         rom_dict = {}
         valid_subs = []

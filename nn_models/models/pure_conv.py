@@ -9,15 +9,20 @@ from torch.nn import *  # noqa
 
 
 class CustomConv1D(nn.Module):
-    def __init__(self, inp_size=[42], outp_size=[18], window=31, conv_layers=[42], groups=[1],
+    def __init__(self, inp_size=[42], outp_size=[18], window=31, layers=[42], groups=[1],
                  conv_activation=['ReLU'], conv_batchnorm=False, conv_dropout=[],
-                 lin_layers=[], lin_activation=['ReLU'], lin_dropout=[], **kwargs):
+                 lin_layers=[], lin_activation=['ReLU'], lin_dropout=[], conv_layers=None,
+                 **kwargs):
+
         super(CustomConv1D, self).__init__()
         pad = int((window-1)/2)
 
+        if conv_layers is not None:
+            layers = conv_layers
+
         # Convolutional arguments
-        self.conv_sizes = inp_size + conv_layers
-        self.linear_sizes = [conv_layers[-1]] + lin_layers + outp_size
+        self.conv_sizes = inp_size + layers
+        self.linear_sizes = [layers[-1]] + lin_layers + outp_size
         self.conv_batchnorm = conv_batchnorm
         self.conv_dropout = conv_dropout
         self.lin_dropout = lin_dropout

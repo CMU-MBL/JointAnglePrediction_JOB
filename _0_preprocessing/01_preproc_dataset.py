@@ -35,7 +35,7 @@ def viz_seq_lens(h5path):
         print('Total number of subjects: {}'.format(sum(frequent_seqlens.values())))
         data = np.array([[key, val] for key, val in seqlen_dict.items()])
         plt.scatter(data[:, 0], data[:, 1])
-        plt.show()
+        # plt.show()
 
 
 if __name__ == '__main__':

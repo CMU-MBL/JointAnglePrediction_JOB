@@ -1,8 +1,7 @@
 import os.path as osp
 from copy import copy
-import sys
 
-sys.path.append('./')
+import sys; sys.path.append('./')
 from nn_models.train_model import main
 
 
@@ -38,7 +37,7 @@ def get_default_model(data_path, result_path):
     # Model parameters
     model_spec = {'inp_size': [16],
         'prediction': 'orientation',
-        'outp_size': [8],
+        'outp_size': [12],
         'layers':[70, 70, 70],
         'bidir': True,
         'dropout':[0, 0, 0]}
@@ -62,8 +61,8 @@ if __name__ == '__main__':
 
     for activity in ['Walking', 'Running']:
         data_file = 'walking_data.h5' if activity == 'Walking' else 'running_data.h5'
-        data_path = osp.join('Data', '2_Processed', data_file)
-        base_result_path = osp.join('Data/5_Optimization/NN_Prediction', activity)
+        data_path = osp.join('Data', '2_Processed_rotmat', data_file)
+        base_result_path = osp.join('Data/5_Optimization/NN_Prediction_', activity)
 
         for (inp, outp, fldr) in zip(inp_lists, outp_lists, folder_names):
             result_path = osp.join(base_result_path, fldr) + '/'

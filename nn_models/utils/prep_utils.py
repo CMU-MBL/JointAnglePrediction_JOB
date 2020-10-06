@@ -44,10 +44,11 @@ def get_sub_dict(h5path, subject_ids, inp_fields, outp_fields, prediction, devic
                     left_gyr = fh['s' + str(sid) + '/l' + inp + '/gyr'][:, :]
                     tmp = np.linalg.norm(left_gyr, axis=1, keepdims=True)
                     left_gyr = np.concatenate((left_gyr, tmp), axis=1)
+                    
                     # Right orientations
-                    right_ori = fh['s' + str(sid) + '/r' + inp + '/ori'][:, :]
+                    right_ori = fh['s' + str(sid) + '/r' + inp + '/rmat'][:, :]
                     # Left orientations
-                    left_ori = fh['s' + str(sid) + '/l' + inp + '/ori'][:, :]
+                    left_ori = fh['s' + str(sid) + '/l' + inp + '/rmat'][:, :]
 
                     # Stack right and left data
                     right_tmp = np.concatenate((right_acc, right_gyr), axis=1)
@@ -56,6 +57,7 @@ def get_sub_dict(h5path, subject_ids, inp_fields, outp_fields, prediction, devic
                     x_list.append(np.stack((right_tmp, left_tmp), axis=0))
                     # Add orientation ground truth
                     y_ori_list.append(np.stack((right_ori, left_ori), axis=0))
+
                 else:
                     # Accelerations
                     acc = fh['s' + str(sid) + '/' + inp + '/acc'][:, :]
@@ -65,8 +67,10 @@ def get_sub_dict(h5path, subject_ids, inp_fields, outp_fields, prediction, devic
                     gyr = fh['s' + str(sid) + '/' + inp + '/gyr'][:, :]
                     tmp = np.linalg.norm(gyr, axis=1, keepdims=True)
                     gyr = np.concatenate((gyr, tmp), axis=1)
+                    
                     # Orientations
-                    ori = fh['s' + str(sid) + '/' + inp + '/ori'][:, :]
+                    ori = fh['s' + str(sid) + '/' + inp + '/rmat'][:, :]
+                    
                     # Concatenate accelerations and angular velocity columns
                     tmp = np.concatenate((acc, gyr), axis=1)
                     if inp == 'pelvis' and ('thigh' in inp_fields or
@@ -94,7 +98,7 @@ def get_sub_dict(h5path, subject_ids, inp_fields, outp_fields, prediction, devic
                     angle = fh['s' + str(sid) + '/' + outp + '/angle'][:, :]
                     y_angle_list.append(angle[None, :, :])
 
-            y_ori = np.concatenate(y_ori_list, axis=2)
+            y_ori = np.concatenate(y_ori_list, axis=-1)
             y_angle = np.concatenate(y_angle_list, axis=2)
             
             if prediction == 'angle':
@@ -105,7 +109,7 @@ def get_sub_dict(h5path, subject_ids, inp_fields, outp_fields, prediction, devic
             x = torch.from_numpy(x).float().to(device)
             y = torch.from_numpy(y).float().to(device)
             sub_dict[eid] = [x, y]
-
+            
     return sub_dict
 
 

@@ -4,7 +4,40 @@
 #
 # --------------------------
 
+import torch
 import torch.nn as nn
+from torch.nn import functional as F
+
+
+def rot6_to_rotmat(x):
+    """Change rot 6d vector to rotation matrix
+    x:      batch X seql X 12
+    out:    batch X seql X 18
+    """
+    batch, seql = x.shape[:2]
+
+    def conversion(x_):
+        a1 = x_[:, :, 0]
+        a2 = x_[:, :, 1]
+        b1 = F.normalize(a1)
+        b2 = F.normalize(a2 - torch.einsum('bi,bi->b', b1, a2).unsqueeze(-1) * b1)
+        b3 = torch.cross(b1, b2)
+
+        x_ = torch.stack((b1, b2, b3), dim=-1)
+        x_ = x_.view(batch, seql, 3, 3)
+
+        return x_
+
+    x = x.view(-1, 3, 4)
+    x1, x2 = x[:, :, :2], x[:, :, 2:]
+    
+    x1 = conversion(x1)
+    x2 = conversion(x2)
+    
+    x = torch.cat((x1, x2), dim=-1)
+    
+    return x
+
 
 
 class CustomLSTM(nn.Module):
@@ -37,5 +70,8 @@ class CustomLSTM(nn.Module):
 
         # Linear output layer
         y = self.linear_out(out)
+
+        if y.shape[-1] == 12:
+            y = rot6_to_rotmat(y)
 
         return y

@@ -38,7 +38,6 @@ if __name__ == '__main__':
                 (x_val, y_val, y_pred_val,
                  x_test, y_test, y_pred_test) = eval_utils.load_predictions(model)
                 val_rmse = eval_utils.calc_rmses(y_val, y_pred_val)
-                # test_rmse = eval_utils.calc_rmses(y_test, y_pred_test)
                 rmse_list.append(np.mean(val_rmse, axis=0, keepdims=True))
             # Create RMSE array
             rmses = np.concatenate(rmse_list, axis=0)
@@ -81,8 +80,8 @@ if __name__ == '__main__':
                 for model in model_paths:
                     model_name = model.replace('\\', '/').split('/')[-1]
 
-                    x_val, y_val, y_pred_val, x_test, y_test, y_pred_test = eval_utils.load_predictions(
-                        model)
+                    x_val, y_val, y_pred_val, x_test, y_test, y_pred_test = \
+                        eval_utils.load_predictions(model)
                     val_rmse = eval_utils.calc_rmses(y_val, y_pred_val)
                     test_rmse = eval_utils.calc_rmses(y_test, y_pred_test)
 

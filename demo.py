@@ -1,117 +1,167 @@
 from nn_models.models.pure_conv import CustomConv1D
-from nn_models.models.pure_lstm import CustomLSTM
-
-import sys; sys.path.append('./2_optimization/utils')
-from optimization_utils import optimization_demo
+from nn_models.models.pure_lstm import CustomLSTM, rot6_to_rotmat
+from _2_optimization.utils.optimization_utils import *
 
 import torch
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 import pickle
 import argparse
+import os
 from os import path as osp
 
 
-def viz_angle_result(angle_list, label_list, title=None):
-    '''
-    Plots resultant angles on one plot, dependant on the list of angles and labels provided
-    '''
-    # Converts inputs to list if not already
-    if type(angle_list) is not list:
-        angle_list = [angle_list]
-        label_list = [label_list]
-    txt_size = 10
-    fig_h = 8
-    fig_w = 15
-    line = 3
-    pad = 20
-    dof = ['Flexion', 'Adduction', 'Rotation']
-    plt.rc('font', size=txt_size)
-    fig, ax_array = plt.subplots(3, 1, sharex=True, figsize=(fig_w, fig_h))
-    if title is not None:
-        ax_array[0].set_title(title)
-    # Cycles through each angle/label
-    for i in range(len(angle_list)):
-        # Checks if subj data is 2 or 3 dimensional array
-        if angle_list[i].ndim == 3:
-            subj_data = angle_list[i][0, :, :]
-        else:
-            subj_data = angle_list[i]
-        # Cycles through each degree of freedom
-        for j in range(subj_data.shape[1]):
-            angle_data = subj_data[:, j]
-            ax = ax_array[j]
-            ax.plot(angle_data, label=label_list[i], linewidth=line)
-            if i == len(angle_list)-1:
-                ax.set_ylabel(dof[j]+' Angle [deg]', labelpad=pad)
-                ax.spines['right'].set_visible(False)
-                ax.spines['top'].set_visible(False)
-                if j == subj_data.shape[1]-1:
-                    ax.legend(frameon=False)
-    plt.tight_layout()
+def butter_low(data, order=4, fc=5, fs=100):
+    """
+    Zero-lag butterworth filter for column data (i.e. padding occurs along axis 0).
+    The defaults are set to be reasonable for standard optoelectronic data.
+    """
+    from scipy.signal import butter, filtfilt
+    
+    # Filter design
+    b, a = butter(order, 2*fc/fs, 'low')
+    # Make sure the padding is neither overkill nor larger than sequence length permits
+    padlen = min(int(0.5*data.shape[0]), 200)
+    # Zero-phase filtering with symmetric padding at beginning and end
+    filt_data = filtfilt(b, a, data, padlen=padlen, axis=1)
+    return filt_data
+
+
+def save_to_csv(path, nn, opt, calib_nn, calib_opt):
+    """Creates csv file for results"""
+    import pandas as pd
+
+    cols = ['RMSE Type', 'Flexion', 'Adduction', 'Rotation']
+    df_one = pd.DataFrame(columns=cols)
+    df_one.loc[0] = ['NN'] + nn.tolist()
+    df_one.loc[1] = ['NN + Opt'] + opt.tolist()
+    df_one.loc[2] = ['Calibrated NN'] + calib_nn.to_list()
+    df_one.loc[3] = ['Calibrated NN + Opt'] + calib_opt.to_list()
+    df_one.to_csv(path+'/RMSE_loss.csv', index=False)
+
+
+def visualize_result(gt_angle, nn_angle, opt_angle, opt_only=None, angle_idx=0):
+    """Draw a angle curves of predictions and ground truth to visualize the performance of estimation"""
+    angles = [gt_angle[:, angle_idx], nn_angle[:, angle_idx], opt_angle[:, angle_idx], opt_only[:, angle_idx]]
+    colors = ['tab:grey', 'tab:blue', 'tab:orange', 'black']
+    labels = ['Ground Truth', 'Neural Network', '+ Optimization', 'Optimization Only']
+    linestyles = ['-', ':', '--', '--']
+    linewidth = 3
+
+    plt.close()
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    x = np.arange(gt_angle.shape[0]) / (gt_angle.shape[0]) * 100
+    
+    for angle, color, label, linestyle in zip(angles, colors, labels, linestyles):
+        if angle is None:
+            continue
+        ax.plot(x, angle, linewidth=linewidth, linestyle=linestyle, color=color, label=label)
+    
+    plt.legend(fontsize=22, frameon=False, loc=2)
+    plt.xlabel('Gait Cycle (%)', fontsize=24)
+    plt.ylabel('Knee Flexion Angle ('r'$\degree$'')', fontsize=24)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    plt.savefig('Visualization_angle_%d.png'%angle_idx)
+    
+
+def evaluate_result(nn_result, combined_result, gt_angle, result_fldr=None, calib=False):
+    """Calculate RMSE result (Neural network, Optimization combined model) by comparing with anatomical markers"""
+
+    def print_result(string, array):
+        flex, add, rot = array
+        print('%s %.2f (Flexion),  %.2f (Adduction),  %.2f (Rotation)'%(string, flex, add, rot))
+
+    if result_fldr is not None:
+        # Save result
+        if not osp.exists(result_fldr):
+            import os; os.makedirs(result_fldr)
+        
+        calib_name = "calib_" if calib else ""
+        np.save(osp.join(result_fldr, calib_name + "nn_result.npy"), nn_result)
+        np.save(osp.join(result_fldr, calib_name + "combined_result.npy"), combined_result)
+
+    if gt_angle is not None:
+        gt_angle = gt_angle - gt_angle.mean(axis=1)[:, None, :] if calib else gt_angle
+        nn_result = nn_result - nn_result.mean(axis=1)[:, None, :] if calib else nn_result
+        combined_result = combined_result - combined_result.mean(axis=1)[:, None, :] if calib else combined_result
+        
+        rmse_nn_result = np.sqrt(((nn_result - gt_angle)**2).mean(axis=1)).mean(axis=0)
+        rmse_opt_result = np.sqrt(((combined_result - gt_angle)**2).mean(axis=1)).mean(axis=0)
+
+    else:
+        rmse_nn_result = np.nan
+        rmse_opt_result = np.nan
+    
+    calib_print = '(Calibrated)' if calib else '(Uncalibrated)'
+    print_result('Neural Network %s  :'%calib_print, rmse_nn_result)
+    print_result('Optimization %s    :'%calib_print, rmse_opt_result)
 
 
 def run_demo(inpt_data, gyro_data, 
              angle_norm_dict, ori_norm_dict, 
              angle_model, ori_model, 
-             alpha, result_fldr, 
-             gt_data=None):
+             weight, std_ratio, result_fldr, 
+             joint='Knee', leg='Left', gt_angle=None,
+             **kwargs):
     
+    # if the beginning part of data is not clean, select some intermediate sequence
+    start, end = 2000, 12800
+
+    inpt_data = inpt_data[:1, start:end]
+    gyro_data = gyro_data[:1, start:end]
+    
+    if gt_angle is not None:
+        gt_angle = gt_angle[:1, start:end]  
+    
+    # Smooth Ground-truth values
+    b, a = butter(4, 2*5/100, 'low')
+    padlen = min(int(0.5*gt_angle.shape[1]), 200)
+    gt_angle = filtfilt(b, a, gt_angle, padlen=padlen, axis=1)
+    
+    # Neural Network Prediction
     with torch.no_grad():
         # normalize input data
-        inpt_data = (inpt_data - angle_norm_dict['x_mean']) / angle_norm_dict['x_std']
+        inpt_data_angle = (inpt_data - angle_norm_dict['x_mean']) / angle_norm_dict['x_std']
+        inpt_data_ori = (inpt_data - ori_norm_dict['x_mean']) / ori_norm_dict['x_std']
         
         # Predict angle
         angle_model.eval()
-        nn_result = angle_model(inpt_data)
+        alpha = angle_model(inpt_data_angle)
 
         # Predict orientation
         ori_model.eval()
-        ori_pred = ori_model(inpt_data)
+        ori_pred = ori_model(inpt_data_ori)
+        ori_pred = rot6_to_rotmat(ori_pred)
 
         # Un-normalize output prediction
-        nn_result = nn_result * angle_norm_dict['y_std'] + angle_norm_dict['y_mean']
-        ori_pred = ori_pred * ori_norm_dict['y_std'] + ori_norm_dict['y_mean']
+        alpha = alpha * angle_norm_dict['y_std'] + angle_norm_dict['y_mean']
 
-        nn_result = nn_result.detach().cpu().double().numpy()
+        alpha = alpha.detach().cpu().double().numpy()
         ori_pred = ori_pred.detach().cpu().double().numpy()
+        
+    # Get beta from optimization
+    beta = optimization_demo(ori_pred, gyro_data, joint=joint, leg=leg)
 
-    # Optimize orientation
-    opt_result = optimization_demo(ori_pred, gyro_data)
-    opt_result = opt_result - opt_result.mean(axis=1)[:, None] + nn_result.mean(axis=1)[:, None]
+    # Get theta from alpha and beta
+    beta = (beta - beta.mean(axis=1)[:, None]) * std_ratio + alpha.mean(axis=1)[:, None]
+    theta = weight * alpha[:, s_:e_] + (1 - weight) * beta
 
-    combined_result = alpha * nn_result + (1 - alpha) * opt_result
+    for calib in [False, True]:
+        evaluate_result(alpha[:, s_:e_], theta, gt_angle[:, s_:e_], 
+                        result_fldr=result_fldr, calib=calib)
+        print('\n\n')
+        
+        
 
-    calib_nn_result = nn_result - nn_result.mean(axis=1)[:, None, :]
-    calib_opt_result = opt_result - opt_result.mean(axis=1)[:, None, :]
-    calib_combined_result = alpha * calib_nn_result + (1 - alpha) * calib_opt_result
-
-    if not osp.exists(result_fldr):
-        import os; os.makedirs(result_fldr)
-
-    np.save(osp.join(result_fldr, "nn_result.npy"), nn_result)
-    np.save(osp.join(result_fldr, "nn_result.npy"), combined_result)
-    np.save(osp.join(result_fldr, "calib_nn_result.npy"), calib_nn_result)
-    np.save(osp.join(result_fldr, "calib_combined_result.npy"), calib_combined_result)
-
-    if gt_data is not None:
-        calib_gt_data = gt_data - gt_data.mean(axis=1)[:, None, :]
-        mse_nn_result = np.sqrt(((nn_result - gt_data)**2).mean(axis=1)).mean(axis=0)
-        mse_opt_result = np.sqrt(((combined_result - gt_data)**2).mean(axis=1)).mean(axis=0)
-        mse_calib_nn_result = np.sqrt(((calib_nn_result - calib_gt_data)**2).mean(axis=1)).mean(axis=0)
-        mse_calib_opt_result = np.sqrt(((calib_combined_result - calib_gt_data)**2).mean(axis=1)).mean(axis=0)
-
-    #TODO: Save csv file using pandas
-
-
-def load_custom_data(path, is_gt_data=False):
+def load_custom_data(path, is_imu_data=True):
     """Load IMU data from path.
     Assuming data type as numpy array or torch tensor, other format has not been implemented yet.
     The size of data is Subjects X Frames X Dimension and dimension of the data can be
-    three (X, Y, Z) or four (X, Y, Z, norm).
-    """
+    three (X, Y, Z) or four (X, Y, Z, norm)."""
     
     if path[-3:] == "npy":
         _data = np.load(path)
@@ -132,14 +182,14 @@ def load_custom_data(path, is_gt_data=False):
     if len(_data.shape) == 2:
         _data = _data[None]
     
-    if is_gt_data:
+    if not is_imu_data:
         if isinstance(_data, torch.Tensor):
             _data = _data.double().numpy()
         return _data
     
     sz_b, sz_l, sz_d = _data.shape
     assert sz_d in [3, 4], "Dimension of imu data should be 3 or 4"
-    
+
     if sz_d == 3:
         norm = torch.norm(_data, p='fro', dim=-1, keepdim=True)
         _data = torch.cat([_data, norm], dim=-1)
@@ -147,30 +197,46 @@ def load_custom_data(path, is_gt_data=False):
     return _data
 
 
+def prepare_data(root_path, leg):
+    
+    seg1_accel_path = osp.join(root_path, '%s_seg1_acc.npy'%leg)
+    seg2_accel_path = osp.join(root_path, '%s_seg2_acc.npy'%leg)
+    seg1_gyro_path = osp.join(root_path, '%s_seg1_gyr.npy'%leg)
+    seg2_gyro_path = osp.join(root_path, '%s_seg2_gyr.npy'%leg)
+    gt_angle_path = osp.join(root_path, '%s_mocap_ang.npy'%leg)
+
+    # Load custom data
+    seg1_accel = load_custom_data(seg1_accel_path)
+    seg2_accel = load_custom_data(seg2_accel_path)
+    seg1_gyro = load_custom_data(seg1_gyro_path)
+    seg2_gyro = load_custom_data(seg2_gyro_path)
+
+    if gt_angle_path is not "":
+        gt_angle = load_custom_data(gt_angle_path, is_imu_data=False)
+    else:
+        gt_angle = None
+
+    inpt_data = torch.cat([seg1_accel, seg1_gyro, seg2_accel, seg2_gyro], dim=-1)
+    inpt_data = inpt_data.to(device=device, dtype=dtype)
+
+    inpt_gyro = torch.cat([seg1_gyro[:, :, :-1], seg2_gyro[:, :, :-1]], dim=-1)
+    inpt_gyro = inpt_gyro.double().numpy()
+
+    return inpt_data, inpt_gyro, gt_angle
+
+
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Demo code arguments')
     
-    parser.add_argument('--joint', choices=["knee", "hip", "ankle"], 
+    parser.add_argument('--joint', choices=["Knee", "Hip", "Ankle"],
                         type=str, help="The type of joint")
 
-    parser.add_argument('--activity', choices=["walking", "running"], 
+    parser.add_argument('--activity', choices=["Walking", "Running"], 
                         type=str, help="The type of activity")
 
-    parser.add_argument('--seg1-accel-path', type=str, 
-                        help="custom data (segment 1 acceleration) path")
-    
-    parser.add_argument('--seg2-accel-path', type=str, 
-                        help="custom data (segment 2 acceleration) path")
-    
-    parser.add_argument('--seg1-gyro-path', type=str, 
-                        help="custom data (segment 1 gyroscope) path")
-    
-    parser.add_argument('--seg2-gyro-path', type=str, 
-                        help="custom data (segment 2 gyroscope) path")
-
-    parser.add_argument('--gt-angle-path', type=str,  default="",
-                        help="custom data (ground-truth angle) path")
+    parser.add_argument('--root-path', type=str, 
+                        help="custom data root path")
 
     parser.add_argument('--angle-model-fldr', type=str, 
                         default="",
@@ -193,72 +259,45 @@ if __name__ == "__main__":
     dtype = torch.float
     device = 'cuda' if (args.use_cuda and torch.cuda.is_available()) else 'cpu'
     
+    result_fldr = args.result_fldr
     joint = args.joint
     activity = args.activity
-    seg1_accel_path = args.seg1_accel_path
-    seg2_accel_path = args.seg2_accel_path
-    seg1_gyro_path = args.seg1_gyro_path
-    seg2_gyro_path = args.seg2_gyro_path
-    gt_angle_path = args.gt_angle_path
+    root_path = osp.join(args.root_path, joint)
+    leg = 'Left'    # Select the direction of your target leg
 
-    angle_model_fldr = args.angle_model_fldr
-    ori_model_fldr = args.ori_model_fldr
-
-    result_fldr = args.result_fldr
-
-    # Load custom data
-    seg1_accel = load_custom_data(seg1_accel_path)
-    seg2_accel = load_custom_data(seg2_accel_path)
-    seg1_gyro = load_custom_data(seg1_gyro_path)
-    seg2_gyro = load_custom_data(seg2_gyro_path)
-
-    if gt_angle_path is not "":
-        gt_angle = load_custom_data(gt_angle_path, is_gt_data=True)
-    else:
-        gt_angle = None
+    inpt_data, inpt_gyro, gt_angle = prepare_data(root_path, leg)
     
-    inpt_data = torch.cat([seg1_accel, seg1_gyro, seg2_accel, seg2_gyro], dim=-1)
-    inpt_data = inpt_data.to(device=device, dtype=dtype)
+    angle_model_fldr = osp.join(args.angle_model_fldr, activity, joint)
+    ori_model_fldr = osp.join(args.ori_model_fldr, activity, joint)
 
-    inpt_gyro = torch.cat([seg1_gyro[:, :, :-1], seg2_gyro[:, :, :-1]], dim=-1)
-    inpt_gyro = inpt_gyro.double().numpy()
 
     # Load prediction model
     for model_fldr in [angle_model_fldr, ori_model_fldr]:
-        with open(osp.join(model_fldr, "model_kwargs.pkl"), "rb") as fopen:
+        _, model, _ = next(os.walk(model_fldr))
+        model_fldr_ = osp.join(model_fldr, model[0])
+        with open(osp.join(model_fldr_, "model_kwargs.pkl"), "rb") as fopen:
             model_kwargs = pickle.load(fopen)
         model = globals()['CustomConv1D'](**model_kwargs) if model_kwargs["model_type"] == "CustomConv1D" \
                                                           else globals()['CustomLSTM'](**model_kwargs)
-        state_dict = torch.load(osp.join(model_fldr, "model.pt"))
+        state_dict = torch.load(osp.join(model_fldr_, "model.pt"))
         model.load_state_dict(state_dict)
         model.to(device=device, dtype=dtype)
-        
+
         if model_fldr == angle_model_fldr:
             angle_model = model
-            angle_norm_dict = torch.load(osp.join(model_fldr, "norm_dict.pt"))['params']
-        
+            angle_norm_dict = torch.load(osp.join(model_fldr_, "norm_dict.pt"))['params']
+
         else:
             ori_model = model
-            ori_norm_dict = torch.load(osp.join(model_fldr, "norm_dict.pt"))['params']        
+            ori_norm_dict = torch.load(osp.join(model_fldr_, "norm_dict.pt"))['params']        
 
-    # Get weight prior alpha
-    if activity == "walking":
-        if joint == "knee":
-            alpha = np.array([0.33, 0.96, 0.94])
-        elif joint == "hip":
-            alpha = np.array([0.26, 0.95, 0.88])
-        elif joint == "ankle":
-            alpha = np.array([0.44, 0.94, 0.68])
+    # Get optimization parameters (weight, std ratio)
+    with open('Data/5_Optimization/parameters.pkl', 'rb') as fopen:
+        params = pickle.load(fopen)
+    std_ratio = params['%s_%s_std'%(joint, activity)]
+    weight = params['%s_%s_weight'%(joint, activity)]
 
-    else:
-        if joint == "knee":
-            alpha = np.array([0.36, 0.98, 0.97])
-        elif joint == "hip":
-            alpha = np.array([0.20, 0.95, 0.97])
-        elif joint == "ankle":
-            alpha = np.array([0.38, 0.98, 0.62])
-    
     run_demo(inpt_data, inpt_gyro, angle_norm_dict, 
              ori_norm_dict, angle_model, 
-             ori_model, alpha, result_fldr, 
-             gt_data=gt_angle)
+             ori_model, weight, std_ratio, result_fldr, 
+             joint=joint, leg=leg, gt_angle=gt_angle)

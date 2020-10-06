@@ -19,12 +19,16 @@
 *.rar
 *.tar
 *.zip
+*.npy
+*.sh
+*.png
 
 # outputs
 ######################
 Data
 __pycache__
 tmp*
+_3_analysis
 
 # Logs and databases #
 ######################

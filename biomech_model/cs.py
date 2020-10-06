@@ -7,6 +7,10 @@
 import numpy as np
 import quaternion
 from scipy.signal import butter, filtfilt
+from scipy.spatial.transform import Rotation as R
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def butter_low(data, order=4, fc=5, fs=100):
@@ -28,7 +32,6 @@ def rotate_vec(quat_mat, vec):
     new_vec = vec + quat_mat[:, 0, None]*t + np.cross(quat_mat[:, 1:], t, axis=1)
 
     return new_vec
-
 
 class CoordinateSystem:
     def __init__(self, origin, orientation):
@@ -55,7 +58,7 @@ class CoordinateSystem:
 
     def calc_acc(self, fr=100, grav_axis=1):
         # Calculate linear acceleration values from 3D positions
-
+        
         self.acc = np.zeros(self.origin.shape)
         vel = fr*np.gradient(self.origin/1000, axis=0)
         self.acc = -fr*np.gradient(vel, axis=0)  # Sensor actually measures inertia => -1
@@ -71,12 +74,6 @@ class CoordinateSystem:
         tmp = 2*fr*quaternion.as_float_array(np.log(quats.conj()[:-1]*quats[1:]))
         self.gyr[0, :] = tmp[0, 1:]
         self.gyr[1:, :] = tmp[:, 1:]
-
-    def calc_ori(self, fr=100):
-        # Calculate orientation values from 3D positions
-        
-        quats = quaternion.from_rotation_matrix(self.orientation.transpose((0, 2, 1)))
-        self.ori = quaternion.as_float_array(quats)
 
     def repair_ang_vel(self, fr=100):
         # Repair outliers in angular velocity generation

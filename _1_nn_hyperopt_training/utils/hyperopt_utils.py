@@ -5,9 +5,10 @@
 #
 # --------------------------
 
-import sys
 from utils.eval_utils import load_predictions, calc_rmses
-sys.path.append('./')  # noqa
+
+import sys; sys.path.append('./')
+
 from nn_models import train_model
 from copy import copy
 import numpy as np
@@ -99,7 +100,7 @@ def assign_params(params, model, joint, data_path, result_path):
         model_spec = {
             'inp_size': [8*len(general_spec['inp'])],
             'outp_size': [3*len(general_spec['outp'])],
-            'conv_layers': params['num_layers']*[params['size_layers']],
+            'layers': params['num_layers']*[params['size_layers']],
             'window': params['window'], 'groups': params['num_layers']*[1],
             'conv_activation': params['num_layers']*['ReLU'],
             'conv_dropout': params['num_layers']*[params['dropout']], 'conv_batchnorm': True,

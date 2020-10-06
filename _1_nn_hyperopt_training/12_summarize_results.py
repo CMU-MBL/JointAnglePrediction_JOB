@@ -7,6 +7,7 @@
 import pandas as pd
 from utils import eval_utils
 from glob import glob
+from tqdm import tqdm
 
 
 if __name__ == '__main__':
@@ -42,7 +43,8 @@ if __name__ == '__main__':
                 # Summarize all models
                 model_paths = glob(pth + model_str)
                 model_paths.sort()
-                for model in model_paths:
+                for exp in tqdm(range(len(model_paths)), leave=True):
+                    model = model_paths[exp]
                     model_name = model.replace('\\', '/').split('/')[-1]
 
                     # Loads predictions and calculates RMSE from model results

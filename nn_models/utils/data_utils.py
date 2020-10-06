@@ -62,12 +62,16 @@ class Normalizer:
             self.params['y_std'] = y_std
 
     def normalize(self, x, y):
-        return ((x-self.params['x_mean'])/self.params['x_std'],
-                (y-self.params['y_mean'])/self.params['y_std'])
+        norm_x = (x-self.params['x_mean'])/self.params['x_std']
+        norm_y = (y-self.params['y_mean'])/self.params['y_std'] if y.shape[-1] == 3 else y.clone()
+        
+        return (norm_x, norm_y)
 
     def revert(self, x, y):
-        return (x*self.params['x_std']+self.params['x_mean'],
-                y*self.params['y_std']+self.params['y_mean'])
+        rev_x = x*self.params['x_std']+self.params['x_mean']
+        rev_y =  y*self.params['y_std']+self.params['y_mean'] if y.shape[-1] == 3 else y.clone()
+        
+        return (rev_x, rev_y)
 
     def save_norm_dict(self, pth):
         # Saves normalizer
