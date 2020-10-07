@@ -128,7 +128,7 @@ def get_cs_dict(markers, seg_list):
         # Origin of cs = average of markers 1-3
         origin = (markers[seg + '_1'] + markers[seg + '_2'] + markers[seg + '_3'])/3
 
-        cs_dict[seg] = CoordinateSystem(origin, corr_orientation, name=seg)
+        cs_dict[seg] = CoordinateSystem(origin, corr_orientation)
 
     return cs_dict
 
@@ -174,8 +174,7 @@ def simulate_inertial_data(cs_dict, freq, sub):
     for cs in cs_dict.values():
         cs.calc_acc(fr=freq)
         cs.calc_ang_vel(fr=freq)
-        cs.repair_ang_vel()
-
+        cs.repair_ang_vel(fr=freq)
 
 def create_h5_file(h5path, nh5path, sub_ids, fname):
     # Creates processed h5 file in new directory with simulated imu results

@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # Run through convolution models
     conv_model = 'CustomConv1D'
-    num_eval = 200
+    num_eval = 300
 
     # Run through for each joint
     # Could take days to run, can comment out certain joints nad run in chunks
