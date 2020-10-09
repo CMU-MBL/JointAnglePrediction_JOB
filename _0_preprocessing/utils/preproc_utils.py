@@ -175,6 +175,7 @@ def simulate_inertial_data(cs_dict, freq, sub):
         cs.calc_acc(fr=freq)
         cs.calc_ang_vel(fr=freq)
         cs.repair_ang_vel(fr=freq)
+        
 
 def create_h5_file(h5path, nh5path, sub_ids, fname):
     # Creates processed h5 file in new directory with simulated imu results
