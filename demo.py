@@ -5,6 +5,7 @@ from _2_optimization.utils.optimization_utils import *
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import butter, filtfilt
 
 import pickle
 import argparse
@@ -17,8 +18,7 @@ def butter_low(data, order=4, fc=5, fs=100):
     Zero-lag butterworth filter for column data (i.e. padding occurs along axis 0).
     The defaults are set to be reasonable for standard optoelectronic data.
     """
-    from scipy.signal import butter, filtfilt
-    
+        
     # Filter design
     b, a = butter(order, 2*fc/fs, 'low')
     # Make sure the padding is neither overkill nor larger than sequence length permits
