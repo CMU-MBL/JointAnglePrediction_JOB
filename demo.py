@@ -246,7 +246,7 @@ if __name__ == "__main__":
     activity = args.activity
     root_path = osp.join(args.root_path, joint)
     leg = 'Left'    # Select the direction of your target leg
-
+    
     inpt_data, inpt_gyro, gt_angle = prepare_data(root_path, leg, device, dtype)
     
     angle_model_fldr = osp.join(args.angle_model_fldr, activity, joint)

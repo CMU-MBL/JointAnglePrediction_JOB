@@ -8,5 +8,6 @@ matplotlib
 h5py
 json2html
 numpy-quaternion
+numba
 XlsxWriter
 hyperopt

@@ -1,3 +1,4 @@
+import sys; sys.path.append('./')
 from utils.optimization_utils import *
 
 import numpy as np
