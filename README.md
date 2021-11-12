@@ -1,5 +1,11 @@
 # JointAnglePrediction_JOB
-​
+
+Official code repository for the paper: <br>
+[**Estimation of kinematics from inertial measurement units using a combined deep learning and optimization framework**](https://www.sciencedirect.com/science/article/pii/S0021929021000099) <br>
+Eric Rapp*, Soyong Shin*, Wolf Thomsen, Reed Ferber, and Eni Halilaj  
+*Journal of Biomechanics*, 2021  
+
+
  # Installation:
  ## 1. Download the source code via git clone
  ```bash
